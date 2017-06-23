@@ -22,9 +22,15 @@ you may re-receive messages you have already seen.
 
 ## API
 
-### swarm = Swarm(keys)
+### swarm = Swarm(keys, cap)
 
 create a new instance with a given ssb-keys keypair.
+if cap is provided, it is used as the `hmac_key` value in [ssb-keys's signObj and verifyObj](https://github.com/ssbc/ssb-keys#signobjkeys-hmac_key-obj)
+
+If cap is not provided, the sha256 hash of the string: "A very simple, secure, eventually consistent, replication protocol" will be used.
+
+hmacs are used before signing, so that signatures created via status-swarm cannot be reused in other
+parts of the ssb protocol.
 
 ### swarm.update(value)
 
@@ -49,6 +55,10 @@ get the timestamp that you last received something from a given node.
 This is _their_ local time, which may be skewed from yours,
 but you need to know their time, because you will use this to
 request they have received since this time.
+
+### swarm.data()
+
+return {} of all current data. contains {<id>: <data>,...}
 
 ### swarm.send(since), swarm.recv(id)
 
@@ -78,4 +88,5 @@ expire messages that are too old (say, to represent only peers that are online, 
 ## License
 
 MIT
+
 
