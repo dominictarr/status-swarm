@@ -3,6 +3,14 @@ var Notify = require('pull-notify')
 var ssbKeys = require('ssb-keys')
 var Cat = require('pull-cat')
 var timestamp = require('monotonic-timestamp')
+var ref = require('ssb-ref')
+function isObject (o) {
+  return o && 'object' == typeof o && !Array.isArray(o) && !Buffer.isBuffer(o)
+}
+
+function isPositive(n) {
+  return 'number' === typeof n && n >= 0
+}
 
 module.exports = function (keys) {
 
@@ -26,17 +34,20 @@ module.exports = function (keys) {
       return
     }
 
-    if(data[value.id]) {
-      if(data[value.id].ts >= value.ts) return 'seen'//no change
+    if(isObject(value)) {
+      if(!isPositive(value.ts) || !ref.isFeed(value.id)) return 'invalid'
+      if(data[value.id]) {
+        if(data[value.id].ts >= value.ts) return 'seen'//no change
+      }
+
+      if(!ssbKeys.verifyObj({public: value.id}, value))
+        return 'unauthorized' //signature invalid
+
+      data[value.id] = value
+      var ts = local[value.id] = timestamp()
+
+      broadcast(value, ts)
     }
-
-    if(!ssbKeys.verifyObj({public: value.id}, value))
-      return 'invalid' //signature invalid
-
-    data[value.id] = value
-    var ts = local[value.id] = timestamp()
-
-    broadcast(value, ts)
   }
 
   return {
@@ -60,6 +71,11 @@ module.exports = function (keys) {
       return val
     },
     send: function (since) {
+      if(isObject(since))
+        since = since.since
+
+      if(!isPositive(since)) return pull.error('since: out of bounds')
+
       var d = []
       for(var k in data) if(local[k] > since) d.push(data[k])
       if(d.length)
@@ -80,5 +96,6 @@ module.exports = function (keys) {
     }
   }
 }
+
 
 
