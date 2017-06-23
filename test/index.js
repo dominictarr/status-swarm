@@ -3,6 +3,8 @@ var pull = require('pull-stream')
 var Swarm = require('../')
 var ssbKeys = require('ssb-keys')
 
+var cap = new Buffer(ssbKeys.hash('A very simple, secure, eventually consistent, replication protocol').replace('.sha256', ''), 'base64')
+
 var tape = require('tape')
 
 var ak = ssbKeys.generate()
@@ -32,6 +34,13 @@ tape('simple', function (t) {
   pull(alice.send(0), pull.drain(function (data) {
     ary.push(data)
   }))
+
+  var data = alice.data()
+  console.log(data)
+
+  for(var k in data) {
+    t.ok(ssbKeys.verifyObj({public: k}, cap, data[k]))
+  }
 
   var ts = ary.pop()
   t.deepEqual(ary, [alice.get(ak.id)])
@@ -97,4 +106,5 @@ tape('invalid recv', function (t) {
   )
   t.end()
 })
+
 

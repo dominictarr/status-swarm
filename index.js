@@ -12,7 +12,10 @@ function isPositive(n) {
   return 'number' === typeof n && n >= 0
 }
 
-module.exports = function (keys) {
+var cap = new Buffer(ssbKeys.hash('A very simple, secure, eventually consistent, replication protocol'), 'base64')
+
+module.exports = function (keys, CAP) {
+  CAP = CAP || cap
 
   var notify = Notify()
   var data = {}  //key->value
@@ -40,7 +43,7 @@ module.exports = function (keys) {
         if(data[value.id].ts >= value.ts) return 'seen'//no change
       }
 
-      if(!ssbKeys.verifyObj({public: value.id}, value))
+      if(!ssbKeys.verifyObj({public: value.id}, CAP, value))
         return 'unauthorized' //signature invalid
 
       data[value.id] = value
@@ -57,9 +60,12 @@ module.exports = function (keys) {
     last: function (id) {
       return (id === keys.id ? local[id] : remote[id]) || 0
     },
+    data: function () {
+      return data
+    },
     update: function (value) {
       var localtime = timestamp()
-      var val = data[keys.id] = ssbKeys.signObj(keys, {
+      var val = data[keys.id] = ssbKeys.signObj(keys, CAP, {
           id: keys.id,
           //statuses for same id with smaller timestamps are ignored.
           ts: localtime,
@@ -96,6 +102,4 @@ module.exports = function (keys) {
     }
   }
 }
-
-
 
