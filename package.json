@@ -12,7 +12,8 @@
     "pull-cat": "^1.1.11",
     "pull-notify": "^0.1.1",
     "pull-stream": "^3.4.5",
-    "ssb-keys": "^6.1.2"
+    "ssb-keys": "^7.0.9",
+    "ssb-ref": "^2.7.1"
   },
   "devDependencies": {
     "tape": "^4.6.0"
