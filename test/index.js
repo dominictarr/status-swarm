@@ -8,9 +8,12 @@ var tape = require('tape')
 var ak = ssbKeys.generate()
 var bk = ssbKeys.generate()
 var ck = ssbKeys.generate()
+var dk = ssbKeys.generate()
+
 var alice = Swarm(ak)
 var bob = Swarm(bk)
-var carol = Swarm(bk)
+var carol = Swarm(ck)
+var dan = Swarm(dk)
 
 //because everything in this module is sync,
 //testing is quite straightforward.
@@ -63,5 +66,35 @@ tape('replicate', function (t) {
 
   t.end()
 
+})
+
+tape('invalid send', function (t) {
+  pull(bob.send(-1), pull.collect(function (err) {
+    t.ok(err)
+    t.end()
+  }))
+})
+
+tape('invalid recv', function (t) {
+  dan.changes(function () {
+    t.fail()
+  })
+  pull(
+    pull.values([
+      false,
+      true,
+      [],
+      {},
+      NaN,
+      null,
+      -1,
+      new Buffer(10),
+      'hello',
+      'string'
+
+    ]),
+    dan.recv(ak.id)
+  )
+  t.end()
 })
 
